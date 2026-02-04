@@ -10,18 +10,25 @@ import { cn } from "@/lib/utils";
 
 // Helper to extract text content from Tambo message
 function getMessageText(message: TamboThreadMessage): string {
+  let text = "";
+
   if (typeof message.content === "string") {
-    return message.content;
-  }
-  if (Array.isArray(message.content)) {
-    return message.content
+    text = message.content;
+  } else if (Array.isArray(message.content)) {
+    text = message.content
       .filter((part): part is { type: "text"; text: string } =>
         typeof part === "object" && part !== null && "type" in part && part.type === "text"
       )
       .map((part) => part.text)
       .join("");
   }
-  return "";
+
+  // If no text but has a rendered component, save a placeholder
+  if (!text && message.renderedComponent) {
+    text = "[Showed interactive component]";
+  }
+
+  return text;
 }
 
 // Saved message type from MongoDB
@@ -41,6 +48,12 @@ interface ThreadViewProps {
 // Component to render saved messages (from MongoDB)
 function SavedMessageRenderer({ message }: { message: SavedMessage }) {
   const isUser = message.role === "user";
+  const isComponentPlaceholder = message.content === "[Showed interactive component]";
+
+  // Skip rendering if no content and not a component placeholder
+  if (!message.content) {
+    return null;
+  }
 
   return (
     <div
@@ -70,20 +83,25 @@ function SavedMessageRenderer({ message }: { message: SavedMessage }) {
           isUser ? "items-end" : "items-start"
         )}
       >
-        {message.content && (
-          <div
-            className={cn(
-              "rounded-2xl px-4 py-3",
-              isUser
-                ? "bg-primary/70 text-primary-foreground rounded-tr-sm"
-                : "bg-card/70 border border-border text-card-foreground rounded-tl-sm"
-            )}
-          >
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+        <div
+          className={cn(
+            "rounded-2xl px-4 py-3",
+            isUser
+              ? "bg-primary/70 text-primary-foreground rounded-tr-sm"
+              : "bg-card/70 border border-border text-card-foreground rounded-tl-sm",
+            isComponentPlaceholder && "italic text-muted-foreground"
+          )}
+        >
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            {isComponentPlaceholder ? (
+              <p className="text-sm text-muted-foreground italic m-0">
+                Showed an interactive component (not available in history)
+              </p>
+            ) : (
               <ReactMarkdown>{message.content}</ReactMarkdown>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

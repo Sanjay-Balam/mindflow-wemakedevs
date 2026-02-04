@@ -13,14 +13,14 @@ export type MoodEntryProps = z.infer<typeof moodEntrySchema>;
 
 // Mood Chart Schema (Generative)
 export const moodChartSchema = z.object({
-  title: z.string(),
+  title: z.string().default("Mood Trends"),
   data: z.array(
     z.object({
       date: z.string(),
       mood: z.number().min(1).max(5),
       label: z.string(),
     })
-  ),
+  ).default([]),
   insight: z.string().nullish(),
 });
 
@@ -39,10 +39,10 @@ export type BreathingExerciseProps = z.infer<typeof breathingExerciseSchema>;
 
 // Insight Card Schema (Generative)
 export const insightCardSchema = z.object({
-  title: z.string(),
-  observation: z.string(),
+  title: z.string().default("Insight"),
+  observation: z.string().default(""),
   pattern: z.string().nullish(),
-  suggestion: z.string(),
+  suggestion: z.string().default(""),
   emoji: z.string().nullish(),
 });
 
@@ -77,7 +77,7 @@ export type GratitudeListProps = z.infer<typeof gratitudeListSchema>;
 
 // Quick Actions Schema (Generative)
 export const quickActionsSchema = z.object({
-  title: z.string().nullish(),
+  title: z.string().default("What would you like to do?"),
   actions: z.array(
     z.object({
       label: z.string(),
@@ -98,14 +98,14 @@ export const quickActionsSchema = z.object({
         ])
         .nullish(),
     })
-  ),
+  ).default([]),
 });
 
 export type QuickActionsProps = z.infer<typeof quickActionsSchema>;
 
 // Coping Tips Schema (Generative)
 export const copingTipsSchema = z.object({
-  title: z.string(),
+  title: z.string().default("Coping Strategies"),
   mood: z.enum(["great", "good", "okay", "bad", "terrible"]).nullish(),
   tips: z.array(
     z.object({
@@ -115,26 +115,26 @@ export const copingTipsSchema = z.object({
         .enum(["physical", "mental", "social", "creative", "mindfulness"])
         .nullish(),
     })
-  ),
+  ).default([]),
 });
 
 export type CopingTipsProps = z.infer<typeof copingTipsSchema>;
 
 // Weekly Summary Schema (Generative)
 export const weeklySummarySchema = z.object({
-  title: z.string(),
-  dateRange: z.string(),
-  averageMood: z.number().min(1).max(5),
+  title: z.string().default("Weekly Summary"),
+  dateRange: z.string().default("This Week"),
+  averageMood: z.number().min(1).max(5).default(3),
   moodBreakdown: z.object({
     great: z.number().default(0),
     good: z.number().default(0),
     okay: z.number().default(0),
     bad: z.number().default(0),
     terrible: z.number().default(0),
-  }),
-  totalEntries: z.number(),
-  topEmotions: z.array(z.string()).nullish(),
-  highlights: z.array(z.string()).nullish(),
+  }).default({ great: 0, good: 0, okay: 0, bad: 0, terrible: 0 }),
+  totalEntries: z.number().default(0),
+  topEmotions: z.array(z.string()).default([]),
+  highlights: z.array(z.string()).default([]),
   suggestion: z.string().nullish(),
 });
 

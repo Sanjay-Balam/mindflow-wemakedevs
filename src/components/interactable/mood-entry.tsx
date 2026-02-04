@@ -13,6 +13,7 @@ import {
   Check,
   X,
   Plus,
+  Loader2,
 } from "lucide-react";
 
 const EMOTIONS = [
@@ -68,11 +69,13 @@ export function MoodEntry(props: MoodEntryProps) {
     defaultState
   );
 
+
   const state = tamboState || defaultState;
   const setState = setTamboState;
 
   const [customTrigger, setCustomTrigger] = useState("");
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleMoodSelect = (
     mood: "great" | "good" | "okay" | "bad" | "terrible"
@@ -119,9 +122,27 @@ export function MoodEntry(props: MoodEntryProps) {
     setIsSaved(false);
   };
 
-  const handleSave = () => {
-    setState({ ...state, timestamp: new Date().toISOString() });
-    setIsSaved(true);
+  const handleSave = async () => {
+    setIsSaving(true);
+
+    try {
+      // 1. Update Tambo component state
+      const updatedState = { ...state, timestamp: new Date().toISOString() };
+      setState(updatedState);
+
+      // 2. Save to MongoDB
+      await fetch("/api/moods", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedState),
+      });
+
+      setIsSaved(true);
+    } catch (error) {
+      console.error("Failed to save mood:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -300,9 +321,28 @@ export function MoodEntry(props: MoodEntryProps) {
         {/* Save Button */}
         <button
           onClick={handleSave}
-          className="w-full py-3 px-4 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary-dark transition-colors shadow-sm"
+          disabled={isSaving || isSaved}
+          className={cn(
+            "w-full py-3 px-4 rounded-lg font-medium transition-colors shadow-sm flex items-center justify-center gap-2",
+            isSaved
+              ? "bg-green-500 text-white cursor-default"
+              : "bg-primary text-primary-foreground hover:bg-primary-dark",
+            isSaving && "opacity-70 cursor-wait"
+          )}
         >
-          Save Mood Entry
+          {isSaving ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Saving...
+            </>
+          ) : isSaved ? (
+            <>
+              <Check className="w-4 h-4" />
+              Mood Saved!
+            </>
+          ) : (
+            "Save Mood Entry"
+          )}
         </button>
       </div>
     </div>
