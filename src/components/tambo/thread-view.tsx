@@ -267,30 +267,36 @@ export function ThreadView({ threadId, savedMessages = [], onTitleUpdate }: Thre
         <div className="max-w-3xl mx-auto space-y-6">
           {/* Welcome message when no messages */}
           {showWelcome && (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="p-4 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 mb-6">
-                <Sparkles className="w-8 h-8 text-primary" />
+            <div className="flex flex-col items-center justify-center py-12 text-center animate-fade-in-up">
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30 rounded-full blur-xl animate-pulse-gentle" />
+                <div className="relative p-5 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/10">
+                  <Sparkles className="w-10 h-10 text-primary animate-float" />
+                </div>
               </div>
               <h2 className="text-2xl font-semibold text-card-foreground mb-2">
                 Welcome to MindFlow
               </h2>
-              <p className="text-muted-foreground max-w-md mb-6">
+              <p className="text-muted-foreground max-w-md mb-8">
                 I&apos;m here to help you track your mood, understand your patterns,
                 and support your mental wellness journey.
               </p>
-              <div className="grid grid-cols-2 gap-3 max-w-sm">
+              <div className="grid grid-cols-2 gap-3 max-w-md w-full">
                 {[
-                  { text: "Log my mood", icon: "heart" },
-                  { text: "I'm feeling anxious", icon: "wind" },
-                  { text: "Start a breathing exercise", icon: "sparkles" },
-                  { text: "Write in my journal", icon: "book" },
-                ].map((suggestion) => (
+                  { text: "Log my mood", emoji: "💭" },
+                  { text: "I'm feeling anxious", emoji: "🌊" },
+                  { text: "Start a breathing exercise", emoji: "🧘" },
+                  { text: "Write in my journal", emoji: "📝" },
+                ].map((suggestion, index) => (
                   <button
                     key={suggestion.text}
                     onClick={() => handleSuggestionClick(suggestion.text)}
-                    className="px-4 py-3 text-sm text-left rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all"
+                    className={`group flex items-center gap-3 px-4 py-3.5 text-sm text-left rounded-xl border border-border
+                      hover:border-primary/50 hover:bg-primary/5 hover:shadow-md
+                      transition-all duration-200 press-effect stagger-${index + 1} animate-fade-in`}
                   >
-                    {suggestion.text}
+                    <span className="text-lg group-hover:scale-110 transition-transform">{suggestion.emoji}</span>
+                    <span className="text-card-foreground group-hover:text-primary transition-colors">{suggestion.text}</span>
                   </button>
                 ))}
               </div>
@@ -329,14 +335,18 @@ export function ThreadView({ threadId, savedMessages = [], onTitleUpdate }: Thre
 
           {/* Loading indicator */}
           {isLoading && (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+            <div className="flex items-center gap-3 animate-fade-in">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center animate-pulse-gentle">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
-              <div className="flex items-center gap-2 px-4 py-3 rounded-2xl rounded-tl-sm bg-card border border-border">
-                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl rounded-tl-sm bg-card border border-border shadow-sm">
+                <div className="flex items-center gap-1">
+                  <span className="loading-dot" />
+                  <span className="loading-dot" />
+                  <span className="loading-dot" />
+                </div>
                 <span className="text-sm text-muted-foreground">
-                  Thinking...
+                  MindFlow is thinking...
                 </span>
               </div>
             </div>

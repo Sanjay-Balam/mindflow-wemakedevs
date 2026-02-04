@@ -146,10 +146,10 @@ export function MoodEntry(props: MoodEntryProps) {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-card rounded-xl border border-border shadow-sm overflow-hidden animate-fade-in">
+    <div className="w-full max-w-2xl mx-auto bg-card rounded-xl border border-border shadow-sm overflow-hidden animate-fade-in-up mindflow-card">
       {/* Header */}
       <div
-        className="px-6 py-4 border-b border-border"
+        className="px-6 py-4 border-b border-border transition-all duration-300"
         style={{
           background: `linear-gradient(135deg, ${getMoodColor(state.mood)}20 0%, transparent 100%)`,
         }}
@@ -171,7 +171,7 @@ export function MoodEntry(props: MoodEntryProps) {
             </div>
           </div>
           {isSaved && (
-            <div className="flex items-center gap-1.5 text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-full text-sm font-medium">
+            <div className="flex items-center gap-1.5 text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-full text-sm font-medium animate-fade-in-scale shadow-sm">
               <Check className="w-4 h-4" />
               Saved
             </div>
@@ -194,21 +194,21 @@ export function MoodEntry(props: MoodEntryProps) {
                   key={option.value}
                   onClick={() => handleMoodSelect(option.value)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all duration-200",
+                    "flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all duration-200 press-effect",
                     isSelected
-                      ? "border-primary bg-primary/10 shadow-sm"
-                      : "border-border hover:border-primary/50 hover:bg-muted"
+                      ? "border-primary bg-primary/10 shadow-md scale-105"
+                      : "border-border hover:border-primary/50 hover:bg-muted hover:scale-102"
                   )}
                 >
                   <Icon
                     className={cn(
-                      "w-5 h-5",
-                      isSelected ? option.color : "text-muted-foreground"
+                      "w-5 h-5 transition-transform",
+                      isSelected ? `${option.color} scale-110` : "text-muted-foreground"
                     )}
                   />
                   <span
                     className={cn(
-                      "font-medium",
+                      "font-medium transition-colors",
                       isSelected
                         ? "text-card-foreground"
                         : "text-muted-foreground"
@@ -323,25 +323,25 @@ export function MoodEntry(props: MoodEntryProps) {
           onClick={handleSave}
           disabled={isSaving || isSaved}
           className={cn(
-            "w-full py-3 px-4 rounded-lg font-medium transition-colors shadow-sm flex items-center justify-center gap-2",
+            "w-full py-3.5 px-4 rounded-xl font-medium transition-all duration-300 shadow-sm flex items-center justify-center gap-2 press-effect",
             isSaved
-              ? "bg-green-500 text-white cursor-default"
-              : "bg-primary text-primary-foreground hover:bg-primary-dark",
-            isSaving && "opacity-70 cursor-wait"
+              ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white cursor-default scale-[1.02] shadow-lg"
+              : "bg-gradient-to-r from-primary to-primary-dark text-primary-foreground hover:shadow-lg hover:scale-[1.02]",
+            isSaving && "opacity-80 cursor-wait"
           )}
         >
           {isSaving ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Saving...
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Saving...</span>
             </>
           ) : isSaved ? (
-            <>
-              <Check className="w-4 h-4" />
+            <span className="flex items-center gap-2 animate-fade-in">
+              <Check className="w-5 h-5" />
               Mood Saved!
-            </>
+            </span>
           ) : (
-            "Save Mood Entry"
+            <span>Save Mood Entry</span>
           )}
         </button>
       </div>

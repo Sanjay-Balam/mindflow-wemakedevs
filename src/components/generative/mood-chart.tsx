@@ -15,6 +15,7 @@ import {
 import { cn, getMoodEmoji } from "@/lib/utils";
 import type { MoodChartProps } from "@/lib/schemas";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { MoodChartSkeleton } from "@/components/ui/skeleton";
 
 const MOOD_COLORS: Record<number, string> = {
   5: "#22c55e", // great
@@ -110,14 +111,21 @@ export function MoodChart({ title = "Mood Trends", data = [], insight, days = 14
         (d) => d && typeof d.date === "string" && typeof d.mood === "number"
       );
 
+  // Show skeleton while loading
+  if (loading) {
+    return <MoodChartSkeleton />;
+  }
+
   if (!validData || validData.length === 0) {
     return (
       <div className="w-full max-w-2xl mx-auto bg-card rounded-xl border border-border shadow-sm p-6 animate-fade-in">
         <h3 className="text-lg font-semibold text-card-foreground mb-4">
           {title || "Mood Trends"}
         </h3>
-        <div className="h-64 flex items-center justify-center text-muted-foreground">
-          No mood data available yet. Start logging your moods!
+        <div className="h-64 flex flex-col items-center justify-center text-muted-foreground gap-3">
+          <div className="text-4xl">📊</div>
+          <p>No mood data available yet.</p>
+          <p className="text-sm">Start logging your moods to see trends!</p>
         </div>
       </div>
     );

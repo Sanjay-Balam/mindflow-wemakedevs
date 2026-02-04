@@ -42,7 +42,10 @@ export function ChatInput({ isLoading = false, onSubmit }: ChatInputProps) {
 
   return (
     <form onSubmit={handleSubmit} className="relative">
-      <div className="flex items-end gap-2 p-4 bg-card border border-border rounded-2xl shadow-sm">
+      <div className={cn(
+        "flex items-end gap-2 p-4 bg-card border rounded-2xl shadow-sm transition-all duration-200",
+        value.trim() ? "border-primary/30 shadow-md" : "border-border"
+      )}>
         <textarea
           ref={textareaRef}
           value={value}
@@ -53,7 +56,7 @@ export function ChatInput({ isLoading = false, onSubmit }: ChatInputProps) {
           disabled={isLoading}
           className={cn(
             "flex-1 resize-none bg-transparent border-0 outline-none text-card-foreground placeholder:text-muted-foreground",
-            "min-h-[24px] max-h-[150px]",
+            "min-h-[24px] max-h-[150px] focus:outline-none",
             isLoading && "opacity-50"
           )}
         />
@@ -61,9 +64,9 @@ export function ChatInput({ isLoading = false, onSubmit }: ChatInputProps) {
           type="submit"
           disabled={!value.trim() || isLoading}
           className={cn(
-            "flex-shrink-0 p-2 rounded-xl transition-all",
+            "flex-shrink-0 p-2.5 rounded-xl transition-all duration-200 press-effect",
             value.trim() && !isLoading
-              ? "bg-primary text-primary-foreground hover:bg-primary-dark"
+              ? "bg-gradient-to-r from-primary to-primary-dark text-primary-foreground hover:shadow-lg hover:scale-105"
               : "bg-muted text-muted-foreground cursor-not-allowed"
           )}
         >
@@ -74,7 +77,7 @@ export function ChatInput({ isLoading = false, onSubmit }: ChatInputProps) {
           )}
         </button>
       </div>
-      <p className="text-xs text-center text-muted-foreground mt-2">
+      <p className="text-xs text-center text-muted-foreground mt-2 opacity-70">
         MindFlow is here to support you. Press Enter to send.
       </p>
     </form>

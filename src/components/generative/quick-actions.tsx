@@ -53,11 +53,11 @@ export function QuickActions({ title, actions }: QuickActionsProps) {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-card rounded-xl border border-border shadow-sm overflow-hidden animate-fade-in">
+    <div className="w-full max-w-2xl mx-auto bg-card rounded-xl border border-border shadow-sm overflow-hidden animate-fade-in-up mindflow-card">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-border bg-gradient-to-r from-primary/5 to-accent/5">
+      <div className="px-6 py-4 border-b border-border bg-gradient-to-r from-primary/10 via-accent/5 to-transparent">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
+          <div className="p-2 rounded-lg bg-primary/15 animate-pulse-gentle">
             <Sparkles className="w-5 h-5 text-primary" />
           </div>
           <h3 className="text-lg font-semibold text-card-foreground">
@@ -77,11 +77,17 @@ export function QuickActions({ title, actions }: QuickActionsProps) {
               <button
                 key={index}
                 onClick={() => handleAction(action.prompt)}
-                className="group flex items-start gap-3 p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left card-hover"
+                className={cn(
+                  "group flex items-start gap-3 p-4 rounded-xl border border-border",
+                  "hover:border-primary/50 hover:bg-gradient-to-br hover:from-primary/5 hover:to-transparent",
+                  "hover:shadow-md transition-all duration-200 text-left press-effect",
+                  `animate-fade-in stagger-${(index % 4) + 1}`
+                )}
               >
                 <div
                   className={cn(
-                    "p-2 rounded-lg flex-shrink-0 transition-colors",
+                    "p-2.5 rounded-xl flex-shrink-0 transition-all duration-200",
+                    "group-hover:scale-110 group-hover:shadow-sm",
                     colorClass
                   )}
                 >

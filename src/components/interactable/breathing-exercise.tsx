@@ -177,12 +177,12 @@ export function BreathingExercise(props: BreathingExerciseProps) {
     phase === "complete" ? 100 : (totalElapsed / totalDuration) * 100;
 
   return (
-    <div className="w-full max-w-md mx-auto bg-card rounded-xl border border-border shadow-sm overflow-hidden animate-fade-in">
+    <div className="w-full max-w-md mx-auto bg-card rounded-xl border border-border shadow-sm overflow-hidden animate-fade-in-up mindflow-card">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-border bg-gradient-to-r from-primary/5 to-accent/5">
+      <div className="px-6 py-4 border-b border-border bg-gradient-to-r from-cyan-500/10 via-primary/5 to-transparent">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Wind className="w-5 h-5 text-primary" />
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500/20 to-primary/20 animate-pulse-gentle">
+            <Wind className="w-5 h-5 text-cyan-600" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-card-foreground">
@@ -270,10 +270,10 @@ export function BreathingExercise(props: BreathingExerciseProps) {
 
         {/* Progress bar */}
         <div className="space-y-2">
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div className="progress-bar">
             <div
               className={cn(
-                "h-full bg-gradient-to-r transition-all duration-500",
+                "progress-bar-fill bg-gradient-to-r",
                 PHASE_COLORS[phase]
               )}
               style={{ width: `${progress}%` }}
@@ -281,7 +281,7 @@ export function BreathingExercise(props: BreathingExerciseProps) {
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Progress</span>
-            <span>{Math.round(progress)}%</span>
+            <span className="font-medium">{Math.round(progress)}%</span>
           </div>
         </div>
 
@@ -311,7 +311,12 @@ export function BreathingExercise(props: BreathingExerciseProps) {
         <div className="flex gap-3">
           <button
             onClick={togglePlay}
-            className="flex-1 py-3 px-4 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+            className={cn(
+              "flex-1 py-3.5 px-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 press-effect",
+              phase === "complete"
+                ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:shadow-lg"
+                : "bg-gradient-to-r from-primary to-primary-dark text-primary-foreground hover:shadow-lg hover:scale-[1.02]"
+            )}
           >
             {phase === "complete" ? (
               <>
@@ -333,7 +338,7 @@ export function BreathingExercise(props: BreathingExerciseProps) {
           {phase !== "idle" && phase !== "complete" && (
             <button
               onClick={resetExercise}
-              className="py-3 px-4 rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
+              className="py-3.5 px-4 rounded-xl border border-border text-muted-foreground hover:bg-muted hover:border-primary/30 transition-all duration-200 press-effect"
             >
               <RotateCcw className="w-5 h-5" />
             </button>

@@ -76,16 +76,16 @@ export function MessageRenderer({ message }: MessageRendererProps) {
   return (
     <div
       className={cn(
-        "flex gap-3 animate-fade-in",
-        isUser ? "flex-row-reverse" : "flex-row"
+        "flex gap-3",
+        isUser ? "flex-row-reverse animate-slide-in-right" : "flex-row animate-slide-in-left"
       )}
     >
       {/* Avatar */}
       <div
         className={cn(
-          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-transform hover:scale-110",
           isUser
-            ? "bg-primary text-primary-foreground"
+            ? "bg-gradient-to-br from-primary to-primary-dark text-primary-foreground"
             : "bg-gradient-to-br from-primary to-accent text-white"
         )}
       >
@@ -107,9 +107,9 @@ export function MessageRenderer({ message }: MessageRendererProps) {
         {textContent && (
           <div
             className={cn(
-              "rounded-2xl px-4 py-3",
+              "rounded-2xl px-4 py-3 shadow-sm transition-shadow hover:shadow-md",
               isUser
-                ? "bg-primary text-primary-foreground rounded-tr-sm"
+                ? "bg-gradient-to-br from-primary to-primary-dark text-primary-foreground rounded-tr-sm"
                 : "bg-card border border-border text-card-foreground rounded-tl-sm"
             )}
           >
@@ -145,7 +145,7 @@ export function MessageRenderer({ message }: MessageRendererProps) {
 
         {/* Rendered component */}
         {hasComponent && (
-          <div className="w-full mt-2">
+          <div className="w-full mt-2 animate-fade-in-scale">
             {message.renderedComponent}
           </div>
         )}
