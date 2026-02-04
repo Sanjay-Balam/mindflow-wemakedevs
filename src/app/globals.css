@@ -1,26 +1,261 @@
 @import "tailwindcss";
 
+/* MindFlow - Calming Color Palette */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Base colors */
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --card: #ffffff;
+  --card-foreground: #1e293b;
+  --border: #e2e8f0;
+
+  /* Primary - Indigo (trust, calm) */
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --primary-light: #818cf8;
+  --primary-dark: #4f46e5;
+
+  /* Secondary - Soft purple */
+  --secondary: #f1f5f9;
+  --secondary-foreground: #475569;
+
+  /* Accent - Teal (wellness) */
+  --accent: #14b8a6;
+  --accent-foreground: #ffffff;
+
+  /* Mood colors */
+  --mood-great: #22c55e;
+  --mood-good: #84cc16;
+  --mood-okay: #eab308;
+  --mood-bad: #f97316;
+  --mood-terrible: #ef4444;
+
+  /* Status colors */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+
+  /* Muted */
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  /* Input */
+  --input: #e2e8f0;
+  --ring: #6366f1;
+
+  /* Radius */
+  --radius: 0.75rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Mood colors for Tailwind */
+  --color-mood-great: var(--mood-great);
+  --color-mood-good: var(--mood-good);
+  --color-mood-okay: var(--mood-okay);
+  --color-mood-bad: var(--mood-bad);
+  --color-mood-terrible: var(--mood-terrible);
 }
 
+/* Dark mode */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0f172a;
+    --foreground: #f1f5f9;
+    --card: #1e293b;
+    --card-foreground: #f1f5f9;
+    --border: #334155;
+
+    --primary: #818cf8;
+    --primary-foreground: #0f172a;
+    --primary-light: #a5b4fc;
+    --primary-dark: #6366f1;
+
+    --secondary: #1e293b;
+    --secondary-foreground: #cbd5e1;
+
+    --accent: #2dd4bf;
+    --accent-foreground: #0f172a;
+
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+
+    --input: #334155;
+    --ring: #818cf8;
   }
+}
+
+/* Base styles */
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Custom animations */
+@keyframes breathe-in {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+}
+
+@keyframes breathe-out {
+  0% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+}
+
+@keyframes pulse-gentle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes thinking {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-breathe-in {
+  animation: breathe-in 4s ease-in-out;
+}
+
+.animate-breathe-out {
+  animation: breathe-out 4s ease-in-out;
+}
+
+.animate-pulse-gentle {
+  animation: pulse-gentle 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-thinking {
+  animation: thinking 1.5s ease-in-out infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: var(--radius);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: var(--radius);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Gradient backgrounds */
+.gradient-calm {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+}
+
+.gradient-mood-great {
+  background: linear-gradient(135deg, #22c55e 0%, #84cc16 100%);
+}
+
+.gradient-mood-good {
+  background: linear-gradient(135deg, #84cc16 0%, #eab308 100%);
+}
+
+.gradient-mood-okay {
+  background: linear-gradient(135deg, #eab308 0%, #f59e0b 100%);
+}
+
+.gradient-mood-bad {
+  background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+}
+
+.gradient-mood-terrible {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
