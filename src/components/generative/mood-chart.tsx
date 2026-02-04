@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -22,6 +22,15 @@ const MOOD_COLORS: Record<number, string> = {
   3: "#eab308", // okay
   2: "#f97316", // bad
   1: "#ef4444", // terrible
+};
+
+// Mood value mapping (same as in tools.ts)
+const MOOD_VALUES: Record<string, number> = {
+  great: 5,
+  good: 4,
+  okay: 3,
+  bad: 2,
+  terrible: 1,
 };
 
 const getMoodLabel = (value: number): string => {
@@ -49,16 +58,20 @@ interface CustomTooltipProps {
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+    // Ensure mood is a number for color and label lookup
+    const moodValue = typeof data.mood === 'number' ? data.mood : Number(data.mood) || 3;
+    // Always derive label from mood value, not from AI-provided label
+    const moodLabel = getMoodLabel(moodValue);
     return (
       <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
         <p className="text-sm font-medium text-card-foreground">{data.date}</p>
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-xl">{getMoodEmoji(data.label)}</span>
+          <span className="text-xl">{getMoodEmoji(moodLabel.toLowerCase())}</span>
           <span
             className="font-semibold"
-            style={{ color: MOOD_COLORS[data.mood] }}
+            style={{ color: MOOD_COLORS[moodValue] || MOOD_COLORS[3] }}
           >
-            {getMoodLabel(data.mood)}
+            {moodLabel}
           </span>
         </div>
       </div>
@@ -67,12 +80,41 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   return null;
 };
 
-export function MoodChart({ title, data, insight }: MoodChartProps) {
-  if (!data || data.length === 0) {
+export function MoodChart({ title = "Mood Trends", data = [], insight, days = 14 }: MoodChartProps) {
+  const [fetchedData, setFetchedData] = useState<Array<{date: string; mood: number; label: string}>>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch mood data directly from API to ensure correct values
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/moods?days=${days}`)
+      .then(res => res.json())
+      .then(result => {
+        if (result.moods?.length > 0) {
+          const chartData = result.moods.map((m: { mood: string; timestamp: string }) => ({
+            date: new Date(m.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+            mood: MOOD_VALUES[m.mood] || 3,
+            label: m.mood,
+          })).reverse(); // Oldest first for chart
+          setFetchedData(chartData);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [days]);
+
+  // Use fetchedData (from API) if available, otherwise fall back to AI-provided data
+  const validData = fetchedData.length > 0
+    ? fetchedData
+    : (data || []).filter(
+        (d) => d && typeof d.date === "string" && typeof d.mood === "number"
+      );
+
+  if (!validData || validData.length === 0) {
     return (
       <div className="w-full max-w-2xl mx-auto bg-card rounded-xl border border-border shadow-sm p-6 animate-fade-in">
         <h3 className="text-lg font-semibold text-card-foreground mb-4">
-          {title}
+          {title || "Mood Trends"}
         </h3>
         <div className="h-64 flex items-center justify-center text-muted-foreground">
           No mood data available yet. Start logging your moods!
@@ -81,11 +123,11 @@ export function MoodChart({ title, data, insight }: MoodChartProps) {
     );
   }
 
-  // Calculate trend
-  const firstMood = data[0]?.mood || 3;
-  const lastMood = data[data.length - 1]?.mood || 3;
+  // Calculate trend using validData
+  const firstMood = validData[0]?.mood || 3;
+  const lastMood = validData[validData.length - 1]?.mood || 3;
   const trend = lastMood - firstMood;
-  const averageMood = data.reduce((sum, d) => sum + d.mood, 0) / data.length;
+  const averageMood = validData.reduce((sum, d) => sum + (d.mood || 3), 0) / validData.length;
 
   return (
     <div className="w-full max-w-2xl mx-auto bg-card rounded-xl border border-border shadow-sm overflow-hidden animate-fade-in">
@@ -132,7 +174,7 @@ export function MoodChart({ title, data, insight }: MoodChartProps) {
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
-              data={data}
+              data={validData}
               margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
             >
               <defs>
@@ -171,12 +213,15 @@ export function MoodChart({ title, data, insight }: MoodChartProps) {
                 fill="url(#moodGradient)"
                 dot={(props) => {
                   const { cx, cy, payload } = props;
+                  // Ensure mood is a number and get the correct color
+                  const moodValue = typeof payload.mood === 'number' ? payload.mood : Number(payload.mood) || 3;
+                  const color = MOOD_COLORS[moodValue] || MOOD_COLORS[3];
                   return (
                     <circle
                       cx={cx}
                       cy={cy}
                       r={6}
-                      fill={MOOD_COLORS[payload.mood]}
+                      fill={color}
                       stroke="white"
                       strokeWidth={2}
                     />

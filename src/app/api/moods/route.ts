@@ -11,13 +11,23 @@ export interface MoodEntry {
   threadId?: string;
 }
 
-// GET /api/moods - List all mood entries
-export async function GET() {
+// GET /api/moods - List mood entries (with optional days filter)
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const days = parseInt(searchParams.get("days") || "30", 10);
+
     const db = await getDb();
+
+    // Calculate date range
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
     const moods = await db
       .collection<MoodEntry>("moods")
-      .find({})
+      .find({
+        timestamp: { $gte: startDate.toISOString() },
+      })
       .sort({ timestamp: -1 })
       .limit(100)
       .toArray();

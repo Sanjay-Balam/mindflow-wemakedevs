@@ -8,6 +8,30 @@ import { Sparkles, Loader2, User, History } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 
+// Check if text looks like a tool result JSON
+function isToolResultJson(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) {
+    return false;
+  }
+  try {
+    const parsed = JSON.parse(trimmed);
+    return (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      ("success" in parsed || "error" in parsed || "count" in parsed || "summary" in parsed)
+    );
+  } catch {
+    return false;
+  }
+}
+
+// Remove embedded JSON tool results from text
+function stripToolResultJson(text: string): string {
+  const jsonPattern = /\{[^{}]*"success"\s*:\s*(true|false)[^{}]*\}/g;
+  return text.replace(jsonPattern, "").trim();
+}
+
 // Helper to extract text content from Tambo message
 function getMessageText(message: TamboThreadMessage): string {
   let text = "";
@@ -21,6 +45,13 @@ function getMessageText(message: TamboThreadMessage): string {
       )
       .map((part) => part.text)
       .join("");
+  }
+
+  // Filter out tool result JSON
+  if (isToolResultJson(text)) {
+    text = "";
+  } else {
+    text = stripToolResultJson(text);
   }
 
   // If no text but has a rendered component, save a placeholder
@@ -45,13 +76,32 @@ interface ThreadViewProps {
   onTitleUpdate?: (title: string) => void;
 }
 
+// Check if message likely had a chart/component
+function likelyHadComponent(content: string): { had: boolean; type: string; prompt: string } {
+  const lowerContent = content.toLowerCase();
+  if (lowerContent.includes("mood history") || lowerContent.includes("mood entries") || lowerContent.includes("visual overview") || lowerContent.includes("mood chart")) {
+    return { had: true, type: "chart", prompt: "Show my mood history" };
+  }
+  if (lowerContent.includes("breathing") || lowerContent.includes("inhale") || lowerContent.includes("exhale")) {
+    return { had: true, type: "breathing", prompt: "Start a breathing exercise" };
+  }
+  if (lowerContent.includes("journal") || lowerContent.includes("write about")) {
+    return { had: true, type: "journal", prompt: "Write in my journal" };
+  }
+  if (lowerContent.includes("gratitude")) {
+    return { had: true, type: "gratitude", prompt: "Practice gratitude" };
+  }
+  return { had: false, type: "", prompt: "" };
+}
+
 // Component to render saved messages (from MongoDB)
-function SavedMessageRenderer({ message }: { message: SavedMessage }) {
+function SavedMessageRenderer({ message, onRegenerate }: { message: SavedMessage; onRegenerate?: (text: string) => void }) {
   const isUser = message.role === "user";
   const isComponentPlaceholder = message.content === "[Showed interactive component]";
+  const componentInfo = !isUser ? likelyHadComponent(message.content) : { had: false, type: "", prompt: "" };
 
-  // Skip rendering if no content and not a component placeholder
-  if (!message.content) {
+  // Skip rendering if no content or if it's a tool result JSON
+  if (!message.content || isToolResultJson(message.content)) {
     return null;
   }
 
@@ -94,11 +144,31 @@ function SavedMessageRenderer({ message }: { message: SavedMessage }) {
         >
           <div className="prose prose-sm dark:prose-invert max-w-none">
             {isComponentPlaceholder ? (
-              <p className="text-sm text-muted-foreground italic m-0">
-                Showed an interactive component (not available in history)
-              </p>
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-muted-foreground italic m-0">
+                  Interactive component (reload to regenerate)
+                </p>
+                {onRegenerate && (
+                  <button
+                    onClick={() => onRegenerate("Show my mood history")}
+                    className="text-xs text-primary hover:underline text-left"
+                  >
+                    Click to regenerate →
+                  </button>
+                )}
+              </div>
             ) : (
-              <ReactMarkdown>{message.content}</ReactMarkdown>
+              <>
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+                {componentInfo.had && onRegenerate && (
+                  <button
+                    onClick={() => onRegenerate(componentInfo.prompt)}
+                    className="mt-2 text-xs text-primary hover:underline flex items-center gap-1"
+                  >
+                    <span>↻</span> Regenerate {componentInfo.type}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -138,16 +208,18 @@ export function ThreadView({ threadId, savedMessages = [], onTitleUpdate }: Thre
     if (!threadId || !messages.length) return;
 
     try {
-      // Combine saved messages with new messages
-      const allMessages = [
-        ...savedMessages,
-        ...messages.map((msg) => ({
+      // Combine saved messages with new messages, filtering out tool messages and empty content
+      const newMessages = messages
+        .filter((msg) => msg.role !== "tool") // Skip tool messages
+        .map((msg) => ({
           id: msg.id,
           role: msg.role as "user" | "assistant",
           content: getMessageText(msg),
           timestamp: new Date().toISOString(),
-        })),
-      ];
+        }))
+        .filter((msg) => msg.content.length > 0); // Skip empty messages
+
+      const allMessages = [...savedMessages, ...newMessages];
 
       await fetch(`/api/threads/${threadId}`, {
         method: "PUT",
@@ -233,7 +305,11 @@ export function ThreadView({ threadId, savedMessages = [], onTitleUpdate }: Thre
                 <span>Previous conversation</span>
               </div>
               {savedMessages.map((message) => (
-                <SavedMessageRenderer key={message.id} message={message} />
+                <SavedMessageRenderer
+                  key={message.id}
+                  message={message}
+                  onRegenerate={handleSuggestionClick}
+                />
               ))}
               {/* Divider between saved and new messages */}
               {hasMessages && (

@@ -10,15 +10,49 @@ interface MessageRendererProps {
   message: TamboThreadMessage;
 }
 
-// Helper to extract text content from message
+// Check if text looks like a tool result JSON
+function isToolResultJson(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) {
+    return false;
+  }
+  try {
+    const parsed = JSON.parse(trimmed);
+    // Check if it has typical tool result properties
+    return (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      ("success" in parsed || "error" in parsed || "count" in parsed || "summary" in parsed)
+    );
+  } catch {
+    return false;
+  }
+}
+
+// Remove embedded JSON tool results from text
+function stripToolResultJson(text: string): string {
+  // Match JSON objects that look like tool results
+  const jsonPattern = /\{[^{}]*"success"\s*:\s*(true|false)[^{}]*\}/g;
+  return text.replace(jsonPattern, "").trim();
+}
+
+// Helper to extract text content from message, filtering out tool results
 function getMessageText(message: TamboThreadMessage): string {
   if (typeof message.content === "string") {
-    return message.content;
+    // Filter out tool result JSON from string content
+    if (isToolResultJson(message.content)) {
+      return "";
+    }
+    // Also strip embedded JSON from text
+    return stripToolResultJson(message.content);
   }
   if (Array.isArray(message.content)) {
     return message.content
       .filter((part) => part.type === "text")
       .map((part) => (part as { type: "text"; text: string }).text)
+      .filter((text) => !isToolResultJson(text)) // Filter out pure tool results
+      .map((text) => stripToolResultJson(text)) // Strip embedded JSON
+      .filter((text) => text.length > 0) // Remove empty strings
       .join("");
   }
   return "";
@@ -28,6 +62,16 @@ export function MessageRenderer({ message }: MessageRendererProps) {
   const isUser = message.role === "user";
   const hasComponent = message.renderedComponent !== null && message.renderedComponent !== undefined;
   const textContent = getMessageText(message);
+
+  // Skip rendering tool result messages entirely (role is "tool" or no meaningful content)
+  if (message.role === "tool") {
+    return null;
+  }
+
+  // Skip empty messages with no component
+  if (!textContent && !hasComponent) {
+    return null;
+  }
 
   return (
     <div

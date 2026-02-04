@@ -6,6 +6,7 @@ import { ThreadView, SavedMessage } from "@/components/tambo/thread-view";
 import { ChatSidebar } from "@/components/sidebar/chat-sidebar";
 import { useThreads } from "@/hooks/useThreads";
 import { components } from "@/lib/tambo";
+import { tools } from "@/lib/tools";
 import Link from "next/link";
 import { Home, Sparkles, Menu, X } from "lucide-react";
 
@@ -219,6 +220,7 @@ export default function ChatPage() {
               key={key}
               apiKey={apiKey}
               components={components}
+              tools={tools}
             >
               <ThreadView
                 threadId={currentThreadId}

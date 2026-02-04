@@ -14,11 +14,12 @@ export type MoodEntryProps = z.infer<typeof moodEntrySchema>;
 // Mood Chart Schema (Generative)
 export const moodChartSchema = z.object({
   title: z.string().default("Mood Trends"),
+  days: z.number().default(14),
   data: z.array(
     z.object({
-      date: z.string(),
-      mood: z.number().min(1).max(5),
-      label: z.string(),
+      date: z.string().default(""),
+      mood: z.number().min(1).max(5).default(3),
+      label: z.string().default(""),
     })
   ).default([]),
   insight: z.string().nullish(),
@@ -65,9 +66,9 @@ export const gratitudeListSchema = z.object({
   items: z
     .array(
       z.object({
-        id: z.string(),
-        text: z.string(),
-        date: z.string(),
+        id: z.string().default(""),
+        text: z.string().default(""),
+        date: z.string().default(() => new Date().toISOString()),
       })
     )
     .default([]),
@@ -80,9 +81,9 @@ export const quickActionsSchema = z.object({
   title: z.string().default("What would you like to do?"),
   actions: z.array(
     z.object({
-      label: z.string(),
-      description: z.string(),
-      prompt: z.string(),
+      label: z.string().default(""),
+      description: z.string().default(""),
+      prompt: z.string().default(""),
       icon: z
         .enum([
           "heart",
@@ -109,8 +110,8 @@ export const copingTipsSchema = z.object({
   mood: z.enum(["great", "good", "okay", "bad", "terrible"]).nullish(),
   tips: z.array(
     z.object({
-      id: z.string(),
-      tip: z.string(),
+      id: z.string().default(""),
+      tip: z.string().default(""),
       category: z
         .enum(["physical", "mental", "social", "creative", "mindfulness"])
         .nullish(),
