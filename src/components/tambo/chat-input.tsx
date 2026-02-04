@@ -7,15 +7,17 @@ import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
   isLoading?: boolean;
+  onSubmit?: () => void;
 }
 
-export function ChatInput({ isLoading = false }: ChatInputProps) {
+export function ChatInput({ isLoading = false, onSubmit }: ChatInputProps) {
   const { value, setValue, submit } = useTamboThreadInput();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (value.trim() && !isLoading) {
+      onSubmit?.();
       await submit();
     }
   };

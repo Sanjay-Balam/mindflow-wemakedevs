@@ -2,10 +2,10 @@ import { z } from "zod";
 
 // Mood Entry Schema (Interactable)
 export const moodEntrySchema = z.object({
-  mood: z.enum(["great", "good", "okay", "bad", "terrible"]),
+  mood: z.enum(["great", "good", "okay", "bad", "terrible"]).default("okay"),
   emotions: z.array(z.string()).default([]),
-  triggers: z.array(z.string()).optional(),
-  note: z.string().optional(),
+  triggers: z.array(z.string()).nullish(),
+  note: z.string().nullish(),
   timestamp: z.string().default(() => new Date().toISOString()),
 });
 
@@ -21,7 +21,7 @@ export const moodChartSchema = z.object({
       label: z.string(),
     })
   ),
-  insight: z.string().optional(),
+  insight: z.string().nullish(),
 });
 
 export type MoodChartProps = z.infer<typeof moodChartSchema>;
@@ -41,9 +41,9 @@ export type BreathingExerciseProps = z.infer<typeof breathingExerciseSchema>;
 export const insightCardSchema = z.object({
   title: z.string(),
   observation: z.string(),
-  pattern: z.string().optional(),
+  pattern: z.string().nullish(),
   suggestion: z.string(),
-  emoji: z.string().optional(),
+  emoji: z.string().nullish(),
 });
 
 export type InsightCardProps = z.infer<typeof insightCardSchema>;
@@ -52,8 +52,8 @@ export type InsightCardProps = z.infer<typeof insightCardSchema>;
 export const journalEntrySchema = z.object({
   title: z.string().default(""),
   content: z.string().default(""),
-  mood: z.enum(["great", "good", "okay", "bad", "terrible"]).optional(),
-  tags: z.array(z.string()).optional(),
+  mood: z.enum(["great", "good", "okay", "bad", "terrible"]).nullish(),
+  tags: z.array(z.string()).nullish(),
   timestamp: z.string().default(() => new Date().toISOString()),
 });
 
@@ -77,7 +77,7 @@ export type GratitudeListProps = z.infer<typeof gratitudeListSchema>;
 
 // Quick Actions Schema (Generative)
 export const quickActionsSchema = z.object({
-  title: z.string().optional(),
+  title: z.string().nullish(),
   actions: z.array(
     z.object({
       label: z.string(),
@@ -96,7 +96,7 @@ export const quickActionsSchema = z.object({
           "pen",
           "chart",
         ])
-        .optional(),
+        .nullish(),
     })
   ),
 });
@@ -106,14 +106,14 @@ export type QuickActionsProps = z.infer<typeof quickActionsSchema>;
 // Coping Tips Schema (Generative)
 export const copingTipsSchema = z.object({
   title: z.string(),
-  mood: z.enum(["great", "good", "okay", "bad", "terrible"]).optional(),
+  mood: z.enum(["great", "good", "okay", "bad", "terrible"]).nullish(),
   tips: z.array(
     z.object({
       id: z.string(),
       tip: z.string(),
       category: z
         .enum(["physical", "mental", "social", "creative", "mindfulness"])
-        .optional(),
+        .nullish(),
     })
   ),
 });
@@ -133,9 +133,9 @@ export const weeklySummarySchema = z.object({
     terrible: z.number().default(0),
   }),
   totalEntries: z.number(),
-  topEmotions: z.array(z.string()).optional(),
-  highlights: z.array(z.string()).optional(),
-  suggestion: z.string().optional(),
+  topEmotions: z.array(z.string()).nullish(),
+  highlights: z.array(z.string()).nullish(),
+  suggestion: z.string().nullish(),
 });
 
 export type WeeklySummaryProps = z.infer<typeof weeklySummarySchema>;
