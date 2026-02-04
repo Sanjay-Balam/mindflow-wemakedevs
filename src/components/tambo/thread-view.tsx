@@ -1,16 +1,23 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useTamboThread, useTamboThreadInput } from "@tambo-ai/react";
 import { MessageRenderer } from "./message-renderer";
 import { ChatInput } from "./chat-input";
 import { Sparkles, Loader2 } from "lucide-react";
 
-export function ThreadView() {
+interface ThreadViewProps {
+  threadId?: string;
+  onTitleUpdate?: (title: string) => void;
+}
+
+export function ThreadView({ threadId, onTitleUpdate }: ThreadViewProps) {
   const { thread, streaming } = useTamboThread();
   const { setValue, submit } = useTamboThreadInput();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [hasSavedTitle, setHasSavedTitle] = useState(false);
+  const lastMessageCountRef = useRef(0);
 
   // Only show loading after user has actually submitted something
   const isLoading = streaming && hasSubmitted;
@@ -29,6 +36,51 @@ export function ThreadView() {
       setHasSubmitted(false);
     }
   }, [hasMessages, hasSubmitted]);
+
+  // Save messages to MongoDB when they change
+  const saveMessages = useCallback(async () => {
+    if (!threadId || !messages.length) return;
+
+    try {
+      const serializedMessages = messages.map((msg) => ({
+        id: msg.id,
+        role: msg.role,
+        content: typeof msg.content === "string" ? msg.content : "",
+        timestamp: new Date(),
+      }));
+
+      await fetch(`/api/threads/${threadId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: serializedMessages }),
+      });
+    } catch (error) {
+      console.error("Failed to save messages:", error);
+    }
+  }, [threadId, messages]);
+
+  // Save messages when they change
+  useEffect(() => {
+    if (messages.length > lastMessageCountRef.current) {
+      saveMessages();
+      lastMessageCountRef.current = messages.length;
+    }
+  }, [messages.length, saveMessages]);
+
+  // Update thread title based on first user message
+  useEffect(() => {
+    if (!hasSavedTitle && messages.length > 0 && onTitleUpdate) {
+      const firstUserMessage = messages.find((m) => m.role === "user");
+      if (firstUserMessage) {
+        const content = String(firstUserMessage.content || "");
+        if (content) {
+          const title = content.slice(0, 50) + (content.length > 50 ? "..." : "");
+          onTitleUpdate(title);
+          setHasSavedTitle(true);
+        }
+      }
+    }
+  }, [messages, hasSavedTitle, onTitleUpdate]);
 
   const handleSuggestionClick = async (text: string) => {
     setHasSubmitted(true);
