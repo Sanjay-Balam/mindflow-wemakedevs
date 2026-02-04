@@ -1,17 +1,95 @@
 "use client";
 
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { useTamboThread, useTamboThreadInput } from "@tambo-ai/react";
+import { useTamboThread, useTamboThreadInput, TamboThreadMessage } from "@tambo-ai/react";
 import { MessageRenderer } from "./message-renderer";
 import { ChatInput } from "./chat-input";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, User, History } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import { cn } from "@/lib/utils";
+
+// Helper to extract text content from Tambo message
+function getMessageText(message: TamboThreadMessage): string {
+  if (typeof message.content === "string") {
+    return message.content;
+  }
+  if (Array.isArray(message.content)) {
+    return message.content
+      .filter((part): part is { type: "text"; text: string } =>
+        typeof part === "object" && part !== null && "type" in part && part.type === "text"
+      )
+      .map((part) => part.text)
+      .join("");
+  }
+  return "";
+}
+
+// Saved message type from MongoDB
+export interface SavedMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+}
 
 interface ThreadViewProps {
   threadId?: string;
+  savedMessages?: SavedMessage[];
   onTitleUpdate?: (title: string) => void;
 }
 
-export function ThreadView({ threadId, onTitleUpdate }: ThreadViewProps) {
+// Component to render saved messages (from MongoDB)
+function SavedMessageRenderer({ message }: { message: SavedMessage }) {
+  const isUser = message.role === "user";
+
+  return (
+    <div
+      className={cn(
+        "flex gap-3 animate-fade-in opacity-70",
+        isUser ? "flex-row-reverse" : "flex-row"
+      )}
+    >
+      <div
+        className={cn(
+          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+          isUser
+            ? "bg-primary/70 text-primary-foreground"
+            : "bg-gradient-to-br from-primary/70 to-accent/70 text-white"
+        )}
+      >
+        {isUser ? (
+          <User className="w-4 h-4" />
+        ) : (
+          <Sparkles className="w-4 h-4" />
+        )}
+      </div>
+
+      <div
+        className={cn(
+          "flex flex-col gap-2 max-w-[80%]",
+          isUser ? "items-end" : "items-start"
+        )}
+      >
+        {message.content && (
+          <div
+            className={cn(
+              "rounded-2xl px-4 py-3",
+              isUser
+                ? "bg-primary/70 text-primary-foreground rounded-tr-sm"
+                : "bg-card/70 border border-border text-card-foreground rounded-tl-sm"
+            )}
+          >
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <ReactMarkdown>{message.content}</ReactMarkdown>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function ThreadView({ threadId, savedMessages = [], onTitleUpdate }: ThreadViewProps) {
   const { thread, streaming } = useTamboThread();
   const { setValue, submit } = useTamboThreadInput();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -19,16 +97,16 @@ export function ThreadView({ threadId, onTitleUpdate }: ThreadViewProps) {
   const [hasSavedTitle, setHasSavedTitle] = useState(false);
   const lastMessageCountRef = useRef(0);
 
-  // Only show loading after user has actually submitted something
   const isLoading = streaming && hasSubmitted;
+  const messages = thread?.messages || [];
+  const hasMessages = messages.length > 0;
+  const hasSavedMessages = savedMessages.length > 0;
+  const showWelcome = !hasMessages && !hasSavedMessages && !isLoading;
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [thread?.messages]);
-
-  const messages = thread?.messages || [];
-  const hasMessages = messages.length > 0;
+  }, [thread?.messages, savedMessages]);
 
   // Reset hasSubmitted when we get messages back
   useEffect(() => {
@@ -42,22 +120,26 @@ export function ThreadView({ threadId, onTitleUpdate }: ThreadViewProps) {
     if (!threadId || !messages.length) return;
 
     try {
-      const serializedMessages = messages.map((msg) => ({
-        id: msg.id,
-        role: msg.role,
-        content: typeof msg.content === "string" ? msg.content : "",
-        timestamp: new Date(),
-      }));
+      // Combine saved messages with new messages
+      const allMessages = [
+        ...savedMessages,
+        ...messages.map((msg) => ({
+          id: msg.id,
+          role: msg.role as "user" | "assistant",
+          content: getMessageText(msg),
+          timestamp: new Date().toISOString(),
+        })),
+      ];
 
       await fetch(`/api/threads/${threadId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: serializedMessages }),
+        body: JSON.stringify({ messages: allMessages }),
       });
     } catch (error) {
       console.error("Failed to save messages:", error);
     }
-  }, [threadId, messages]);
+  }, [threadId, messages, savedMessages]);
 
   // Save messages when they change
   useEffect(() => {
@@ -69,10 +151,10 @@ export function ThreadView({ threadId, onTitleUpdate }: ThreadViewProps) {
 
   // Update thread title based on first user message
   useEffect(() => {
-    if (!hasSavedTitle && messages.length > 0 && onTitleUpdate) {
+    if (!hasSavedTitle && messages.length > 0 && onTitleUpdate && !hasSavedMessages) {
       const firstUserMessage = messages.find((m) => m.role === "user");
       if (firstUserMessage) {
-        const content = String(firstUserMessage.content || "");
+        const content = getMessageText(firstUserMessage);
         if (content) {
           const title = content.slice(0, 50) + (content.length > 50 ? "..." : "");
           onTitleUpdate(title);
@@ -80,7 +162,7 @@ export function ThreadView({ threadId, onTitleUpdate }: ThreadViewProps) {
         }
       }
     }
-  }, [messages, hasSavedTitle, onTitleUpdate]);
+  }, [messages, hasSavedTitle, onTitleUpdate, hasSavedMessages]);
 
   const handleSuggestionClick = async (text: string) => {
     setHasSubmitted(true);
@@ -94,7 +176,7 @@ export function ThreadView({ threadId, onTitleUpdate }: ThreadViewProps) {
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="max-w-3xl mx-auto space-y-6">
           {/* Welcome message when no messages */}
-          {!hasMessages && !isLoading && (
+          {showWelcome && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="p-4 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 mb-6">
                 <Sparkles className="w-8 h-8 text-primary" />
@@ -125,7 +207,28 @@ export function ThreadView({ threadId, onTitleUpdate }: ThreadViewProps) {
             </div>
           )}
 
-          {/* Messages */}
+          {/* Saved Messages from MongoDB (History) */}
+          {hasSavedMessages && (
+            <>
+              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                <History className="w-4 h-4" />
+                <span>Previous conversation</span>
+              </div>
+              {savedMessages.map((message) => (
+                <SavedMessageRenderer key={message.id} message={message} />
+              ))}
+              {/* Divider between saved and new messages */}
+              {hasMessages && (
+                <div className="flex items-center gap-4 py-2">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs text-muted-foreground">Continuing conversation</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+              )}
+            </>
+          )}
+
+          {/* New Messages from Tambo */}
           {messages.map((message) => (
             <MessageRenderer key={message.id} message={message} />
           ))}

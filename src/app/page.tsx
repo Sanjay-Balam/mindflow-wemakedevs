@@ -86,7 +86,7 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-4">
             <a
-              href="https://github.com/Sanjay-Balam/tambo-hackathon"
+              href="https://github.com/Sanjay-Balam/mindflow-wemakedevs"
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-card-foreground transition-colors"
@@ -306,7 +306,7 @@ export default function HomePage() {
           </p>
           <div className="flex items-center gap-4">
             <a
-              href="https://github.com/Sanjay-Balam/tambo-hackathon"
+              href="https://github.com/Sanjay-Balam/mindflow-wemakedevs"
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-card-foreground transition-colors"

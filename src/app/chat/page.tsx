@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { TamboProvider } from "@tambo-ai/react";
-import { ThreadView } from "@/components/tambo/thread-view";
+import { ThreadView, SavedMessage } from "@/components/tambo/thread-view";
 import { ChatSidebar } from "@/components/sidebar/chat-sidebar";
 import { useThreads } from "@/hooks/useThreads";
 import { components } from "@/lib/tambo";
@@ -20,11 +20,29 @@ export default function ChatPage() {
   } = useThreads();
 
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
+  const [savedMessages, setSavedMessages] = useState<SavedMessage[]>([]);
   const [key, setKey] = useState(0); // Force re-mount TamboProvider
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Generate a new thread ID
   const generateThreadId = () => `thread_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
+  // Fetch saved messages for a thread
+  const fetchSavedMessages = useCallback(async (threadId: string) => {
+    try {
+      const response = await fetch(`/api/threads/${threadId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.thread?.messages?.length > 0) {
+          setSavedMessages(data.thread.messages);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch saved messages:", error);
+    }
+    setSavedMessages([]);
+  }, []);
 
   // Handle creating a new chat
   const handleNewChat = useCallback(async () => {
@@ -32,6 +50,7 @@ export default function ChatPage() {
     try {
       await createThread(newThreadId, "New Conversation");
       setCurrentThreadId(newThreadId);
+      setSavedMessages([]); // Clear saved messages for new chat
       setKey((k) => k + 1); // Force re-mount to start fresh
       setMobileSidebarOpen(false);
     } catch (error) {
@@ -40,11 +59,12 @@ export default function ChatPage() {
   }, [createThread]);
 
   // Handle selecting an existing thread
-  const handleSelectThread = useCallback((threadId: string) => {
+  const handleSelectThread = useCallback(async (threadId: string) => {
     setCurrentThreadId(threadId);
+    await fetchSavedMessages(threadId); // Load saved messages
     setKey((k) => k + 1); // Force re-mount to load thread
     setMobileSidebarOpen(false);
-  }, []);
+  }, [fetchSavedMessages]);
 
   // Handle deleting a thread
   const handleDeleteThread = useCallback(
@@ -71,13 +91,14 @@ export default function ChatPage() {
   useEffect(() => {
     if (!threadsLoading && !currentThreadId) {
       if (threads.length > 0) {
-        setCurrentThreadId(threads[0].threadId);
+        // Load the most recent thread with its messages
+        handleSelectThread(threads[0].threadId);
       } else {
         // Create initial thread
         handleNewChat();
       }
     }
-  }, [threadsLoading, threads, currentThreadId, handleNewChat]);
+  }, [threadsLoading, threads, currentThreadId, handleSelectThread, handleNewChat]);
 
   // Callback to update thread title when first message is sent
   const handleThreadUpdate = useCallback(
@@ -201,6 +222,7 @@ export default function ChatPage() {
             >
               <ThreadView
                 threadId={currentThreadId}
+                savedMessages={savedMessages}
                 onTitleUpdate={handleThreadUpdate}
               />
             </TamboProvider>

@@ -1,11 +1,5 @@
 import { MongoClient, Db } from "mongodb";
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  throw new Error("Please define the MONGODB_URI environment variable");
-}
-
 interface GlobalMongo {
   conn: MongoClient | null;
   promise: Promise<MongoClient> | null;
@@ -23,12 +17,18 @@ if (!cached) {
 }
 
 export async function connectToDatabase(): Promise<MongoClient> {
+  const uri = process.env.MONGODB_URI;
+
+  if (!uri) {
+    throw new Error("Please define the MONGODB_URI environment variable");
+  }
+
   if (cached!.conn) {
     return cached!.conn;
   }
 
   if (!cached!.promise) {
-    cached!.promise = MongoClient.connect(MONGODB_URI!);
+    cached!.promise = MongoClient.connect(uri);
   }
 
   cached!.conn = await cached!.promise;
