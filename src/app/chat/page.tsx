@@ -1,16 +1,20 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
+import Image from "next/image";
 import { TamboProvider } from "@tambo-ai/react";
+import { TamboMcpProvider, MCPTransport } from "@tambo-ai/react/mcp";
 import { ThreadView, SavedMessage } from "@/components/tambo/thread-view";
 import { ChatSidebar } from "@/components/sidebar/chat-sidebar";
 import { useThreads } from "@/hooks/useThreads";
 import { components } from "@/lib/tambo";
 import { tools } from "@/lib/tools";
+import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
-import { Home, Sparkles, Menu, X } from "lucide-react";
+import { Home, Sparkles, Menu, X, LogOut } from "lucide-react";
 
 export default function ChatPage() {
+  const { data: session } = useSession();
   const apiKey = process.env.NEXT_PUBLIC_TAMBO_API_KEY;
   const {
     threads,
@@ -120,6 +124,54 @@ export default function ChatPage() {
     [currentThreadId, fetchThreads]
   );
 
+  // Context helpers provide dynamic app state to the AI
+  const contextHelpers = useMemo(
+    () => ({
+      timeOfDay: () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return { period: "morning", greeting: "Good morning" };
+        if (hour < 17) return { period: "afternoon", greeting: "Good afternoon" };
+        return { period: "evening", greeting: "Good evening" };
+      },
+      recentMoodContext: async () => {
+        try {
+          const response = await fetch("/api/moods?days=3");
+          const data = await response.json();
+          if (data.moods?.length > 0) {
+            return {
+              recentMoods: data.moods.map(
+                (m: { mood: string; timestamp: string; note?: string }) => ({
+                  mood: m.mood,
+                  date: new Date(m.timestamp).toLocaleDateString(),
+                  note: m.note,
+                })
+              ),
+              count: data.moods.length,
+            };
+          }
+          return { recentMoods: [], count: 0 };
+        } catch {
+          return null;
+        }
+      },
+      appContext: () => ({
+        availableFeatures: [
+          "Mood logging with emotion tags and triggers",
+          "Guided breathing exercises (4-7-8, Box, Deep)",
+          "Journaling with mood association",
+          "Gratitude tracking with daily goals",
+          "Mood trend visualization charts",
+          "AI-powered emotional insights",
+          "Coping strategy suggestions",
+          "Weekly mood summaries",
+          "Mood reminders and ambient sounds",
+          "Mood data export for therapists",
+        ],
+      }),
+    }),
+    []
+  );
+
   if (!apiKey) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -178,8 +230,33 @@ export default function ChatPage() {
               </span>
             </Link>
           </div>
-          <div className="text-sm text-muted-foreground hidden sm:block">
-            Your mental wellness companion
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground hidden sm:block">
+              Your mental wellness companion
+            </span>
+            {session?.user && (
+              <div className="flex items-center gap-2 ml-2">
+                {session.user.image && (
+                  <Image
+                    src={session.user.image}
+                    alt=""
+                    width={28}
+                    height={28}
+                    className="rounded-full"
+                  />
+                )}
+                <span className="text-sm text-card-foreground hidden md:block">
+                  {session.user.name}
+                </span>
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-card-foreground"
+                  title="Sign out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -221,12 +298,23 @@ export default function ChatPage() {
               apiKey={apiKey}
               components={components}
               tools={tools}
+              contextHelpers={contextHelpers}
+              mcpServers={[
+                {
+                  name: "MindFlow Wellness",
+                  url: `${typeof window !== "undefined" ? window.location.origin : ""}/api/mcp`,
+                  transport: MCPTransport.HTTP,
+                  serverKey: "mindflow-wellness",
+                },
+              ]}
             >
-              <ThreadView
-                threadId={currentThreadId}
-                savedMessages={savedMessages}
-                onTitleUpdate={handleThreadUpdate}
-              />
+              <TamboMcpProvider>
+                <ThreadView
+                  threadId={currentThreadId}
+                  savedMessages={savedMessages}
+                  onTitleUpdate={handleThreadUpdate}
+                />
+              </TamboMcpProvider>
             </TamboProvider>
           )}
         </main>

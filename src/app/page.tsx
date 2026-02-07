@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Sparkles, Github, ArrowRight, MessageCircle, Wind, BarChart3 } from "lucide-react";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { useSession, signIn, signOut } from "next-auth/react";
+import { Sparkles, Github, ArrowRight, MessageCircle, Wind, BarChart3, LogIn, LogOut } from "lucide-react";
 import {
   AuroraBackground,
   MoodOrbs,
@@ -57,6 +59,21 @@ const howItWorks = [
 ];
 
 export default function HomePage() {
+  const { data: session } = useSession();
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setAvatarMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Navigation */}
@@ -85,16 +102,77 @@ export default function HomePage() {
               href="https://github.com/Sanjay-Balam/mindflow-wemakedevs"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-card-foreground transition-colors"
+              className="flex items-center justify-center text-muted-foreground hover:text-card-foreground transition-colors"
             >
               <Github className="w-5 h-5" />
             </a>
-            <Link
-              href="/chat"
-              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary-dark transition-colors"
-            >
-              Open App
-            </Link>
+            {session?.user ? (
+              <>
+                <Link
+                  href="/chat"
+                  className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary-dark transition-colors"
+                >
+                  Open App
+                </Link>
+                <div className="relative flex items-center" ref={menuRef}>
+                  <button
+                    onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}
+                    className="cursor-pointer flex items-center justify-center rounded-full ring-2 ring-transparent hover:ring-primary/50 transition-all"
+                  >
+                    {session.user.image ? (
+                      <Image
+                        src={session.user.image}
+                        alt=""
+                        width={34}
+                        height={34}
+                        className="rounded-full block"
+                      />
+                    ) : (
+                      <div className="w-[34px] h-[34px] rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium text-sm">
+                        {session.user.name?.[0]?.toUpperCase() || "?"}
+                      </div>
+                    )}
+                  </button>
+                  <AnimatePresence>
+                    {avatarMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-full mt-2 w-64 rounded-xl bg-card border border-border shadow-lg overflow-hidden z-50"
+                      >
+                        <div className="px-4 py-3 border-b border-border">
+                          <p className="text-sm font-medium text-card-foreground truncate">
+                            {session.user.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {session.user.email}
+                          </p>
+                        </div>
+                        <div className="p-1">
+                          <button
+                            onClick={() => signOut({ callbackUrl: "/" })}
+                            className="cursor-pointer w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-card-foreground hover:bg-muted rounded-lg transition-colors"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            Sign out
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={() => signIn("google")}
+                className="cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary-dark transition-colors"
+              >
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </button>
+            )}
           </motion.div>
         </div>
       </nav>
@@ -132,7 +210,12 @@ export default function HomePage() {
             {/* CTA Buttons */}
             <FadeUpText delay={0.3}>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <GlowingButton href="/chat" size="large" breathing>
+                <GlowingButton
+                  href={session?.user ? "/chat" : undefined}
+                  onClick={session?.user ? undefined : () => signIn("google")}
+                  size="large"
+                  breathing
+                >
                   Start Your Journey
                   <ArrowRight className="w-5 h-5" />
                 </GlowingButton>
@@ -311,7 +394,12 @@ export default function HomePage() {
               MindFlow is here to support you every step of the way. Your
               feelings matter, and so does your mental health.
             </p>
-            <GlowingButton href="/chat" size="large" breathing>
+            <GlowingButton
+              href={session?.user ? "/chat" : undefined}
+              onClick={session?.user ? undefined : () => signIn("google")}
+              size="large"
+              breathing
+            >
               Open MindFlow
               <ArrowRight className="w-5 h-5" />
             </GlowingButton>

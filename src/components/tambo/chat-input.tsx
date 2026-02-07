@@ -43,7 +43,7 @@ export function ChatInput({ isLoading = false, onSubmit }: ChatInputProps) {
   return (
     <form onSubmit={handleSubmit} className="relative">
       <div className={cn(
-        "flex items-end gap-2 p-4 bg-card border rounded-2xl shadow-sm transition-all duration-200",
+        "flex items-center gap-2 p-4 bg-card border rounded-2xl shadow-sm transition-all duration-200",
         value.trim() ? "border-primary/30 shadow-md" : "border-border"
       )}>
         <textarea
@@ -56,7 +56,7 @@ export function ChatInput({ isLoading = false, onSubmit }: ChatInputProps) {
           disabled={isLoading}
           className={cn(
             "flex-1 resize-none bg-transparent border-0 outline-none text-card-foreground placeholder:text-muted-foreground",
-            "min-h-[24px] max-h-[150px] focus:outline-none",
+            "min-h-[24px] max-h-[150px]",
             isLoading && "opacity-50"
           )}
         />

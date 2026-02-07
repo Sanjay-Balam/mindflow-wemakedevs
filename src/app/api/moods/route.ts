@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/mongodb";
+import { auth } from "@/auth";
 
 export interface MoodEntry {
   id: string;
@@ -14,6 +15,11 @@ export interface MoodEntry {
 // GET /api/moods - List mood entries (with optional days filter)
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const days = parseInt(searchParams.get("days") || "30", 10);
 
@@ -26,6 +32,7 @@ export async function GET(request: NextRequest) {
     const moods = await db
       .collection<MoodEntry>("moods")
       .find({
+        userId: session.user.id,
         timestamp: { $gte: startDate.toISOString() },
       })
       .sort({ timestamp: -1 })
@@ -45,6 +52,11 @@ export async function GET(request: NextRequest) {
 // POST /api/moods - Save a new mood entry
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { mood, emotions, triggers, note, timestamp, threadId } = body;
 
@@ -56,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await getDb();
-    const moodEntry: MoodEntry = {
+    const moodEntry = {
       id: `mood_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
       mood,
       emotions: emotions || [],
@@ -64,9 +76,10 @@ export async function POST(request: NextRequest) {
       note: note || undefined,
       timestamp: timestamp || new Date().toISOString(),
       threadId,
+      userId: session.user.id,
     };
 
-    await db.collection<MoodEntry>("moods").insertOne(moodEntry);
+    await db.collection("moods").insertOne(moodEntry);
 
     return NextResponse.json({
       success: true,

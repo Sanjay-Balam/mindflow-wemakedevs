@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useTamboThread, useTamboThreadInput, TamboThreadMessage } from "@tambo-ai/react";
 import { MessageRenderer } from "./message-renderer";
 import { ChatInput } from "./chat-input";
+import { Suggestions } from "./suggestions";
 import { Sparkles, Loader2, User, History } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
@@ -358,7 +359,8 @@ export function ThreadView({ threadId, savedMessages = [], onTitleUpdate }: Thre
 
       {/* Input Area */}
       <div className="border-t border-border bg-background/80 backdrop-blur-sm p-4">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto space-y-3">
+          <Suggestions isLoading={isLoading} />
           <ChatInput isLoading={isLoading} onSubmit={() => setHasSubmitted(true)} />
         </div>
       </div>
