@@ -12,6 +12,7 @@ import { MoodEntry } from "@/components/interactable/mood-entry";
 import { JournalEntry } from "@/components/interactable/journal-entry";
 import { BreathingExercise } from "@/components/interactable/breathing-exercise";
 import { GratitudeList } from "@/components/interactable/gratitude-list";
+import { SelfCareChecklist } from "@/components/interactable/self-care-checklist";
 
 // Schemas
 import {
@@ -24,6 +25,7 @@ import {
   journalEntrySchema,
   breathingExerciseSchema,
   gratitudeListSchema,
+  selfCareChecklistSchema,
 } from "./schemas";
 
 export const components: TamboComponent[] = [
@@ -134,6 +136,32 @@ EXAMPLE PROMPTS:
     propsSchema: gratitudeListSchema,
   },
 
+  {
+    name: "SelfCareChecklist",
+    description: `An interactive daily self-care checklist with common wellness activities. Users can check off items as they complete them throughout the day.
+
+WHEN TO RENDER:
+- User says "self-care checklist" or "daily wellness checklist"
+- User asks "What should I do today?" or "What self-care can I do?"
+- User wants to "track my daily habits" or "stay on top of self-care"
+- User mentions wanting a routine or daily wellness plan
+
+FEATURES:
+- 8 default self-care activities across physical, mental, social, and nutrition categories
+- Checkbox toggle with category-colored icons
+- Progress bar showing completion percentage
+- Celebratory state when all items are checked
+- Persists across messages via useTamboComponentState
+
+EXAMPLE PROMPTS:
+- "Show my self-care checklist"
+- "What should I do for self-care today?"
+- "Daily wellness check"
+- "Help me build a self-care routine"`,
+    component: SelfCareChecklist,
+    propsSchema: selfCareChecklistSchema,
+  },
+
   // ===== GENERATIVE COMPONENTS =====
   // These are rendered by AI based on context
 
@@ -211,7 +239,11 @@ GOOD ACTIONS TO INCLUDE:
 - Write in my journal
 - Practice gratitude
 - Show my mood trends
-- Get coping tips`,
+- Get coping tips
+- Show my self-care checklist
+- Guide me through a meditation
+- Help me challenge a negative thought
+- I can't sleep, any tips?`,
     component: QuickActions,
     propsSchema: quickActionsSchema,
   },
@@ -319,16 +351,23 @@ When a user is struggling, provide CopingTips with relevant strategies.
 ### For Review:
 Use WeeklySummary for period reviews and progress tracking.
 
+### For Self-Care:
+When a user wants a daily routine or self-care tracker, use the SelfCareChecklist component. It provides 8 default activities across physical, mental, social, and nutrition categories.
+
 ## Context Awareness
 You have access to dynamic context helpers that provide real-time information:
 - **Time of Day**: You know whether it's morning, afternoon, or evening. Adapt your greetings and suggestions accordingly (e.g., suggest winding down in the evening, energizing activities in the morning).
 - **Recent Mood History**: You may have access to the user's recent mood entries (last 3 days). Reference this naturally without asking the user to repeat themselves. For example, if they logged "bad" yesterday, acknowledge it: "I noticed you were feeling down yesterday..."
 - **App Features**: You know the full list of available features. Guide users to relevant ones based on their needs.
+- **Habit Tracking**: You may know the user's mood logging streak, total entries, and last check-in time. Use this to encourage consistency (e.g., "Amazing 5-day streak!") or gently nudge them back (e.g., "I noticed it's been a few days since your last check-in").
 
 ## MCP Tools
 You have access to external tools via MCP (Model Context Protocol):
 - **search_wellness_resources**: When a user asks for articles, resources, or information about mental health topics, use this tool to find relevant resources. Present results in a helpful, organized way.
 - **get_daily_affirmation**: Use this to share a positive affirmation when the user needs encouragement, at the start of a session, or when asked for motivation.
+- **get_guided_meditation**: Offer guided meditations when user wants to meditate, relax deeply, or practice mindfulness. Available types: body-scan, loving-kindness, progressive-relaxation, mindful-breathing.
+- **get_cbt_exercise**: Use for thought challenging when user has negative thought patterns, cognitive distortions, or wants to challenge unhelpful thinking. Returns a structured CBT worksheet.
+- **get_sleep_tips**: Provide evidence-based sleep hygiene tips when user mentions sleep issues, insomnia, or trouble sleeping.
 
 ## Important Notes
 - Always validate feelings before suggesting activities
@@ -336,6 +375,7 @@ You have access to external tools via MCP (Model Context Protocol):
 - Encourage professional help for serious concerns
 - Keep responses concise but caring
 - Use components to enhance, not replace, human connection
+- **Crisis Detection**: If a user expresses thoughts of self-harm, suicide, or severe distress, IMMEDIATELY call the getCrisisResources tool and present the safety resources prominently. Always validate their feelings and encourage professional help. Never dismiss crisis signals.
 
 ## Sample Interaction Flow
 1. User: "I'm feeling stressed"

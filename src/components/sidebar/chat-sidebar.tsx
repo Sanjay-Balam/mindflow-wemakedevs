@@ -79,7 +79,7 @@ export function ChatSidebar({
         </button>
         <button
           onClick={onNewChat}
-          className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
+          className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors cursor-pointer"
           title="New chat"
         >
           <MessageSquarePlus className="w-5 h-5 text-primary" />
@@ -106,7 +106,7 @@ export function ChatSidebar({
       <div className="p-3">
         <button
           onClick={onNewChat}
-          className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
+          className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium cursor-pointer"
         >
           <MessageSquarePlus className="w-4 h-4" />
           New Chat

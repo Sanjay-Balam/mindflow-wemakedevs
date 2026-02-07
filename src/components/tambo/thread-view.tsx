@@ -3,7 +3,9 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useTamboThread, useTamboThreadInput, TamboThreadMessage } from "@tambo-ai/react";
 import { MessageRenderer } from "./message-renderer";
-import { ChatInput } from "./chat-input";
+import dynamic from "next/dynamic";
+
+const ChatInput = dynamic(() => import("./chat-input"), { ssr: false });
 import { Suggestions } from "./suggestions";
 import { Sparkles, Loader2, User, History } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -288,13 +290,17 @@ export function ThreadView({ threadId, savedMessages = [], onTitleUpdate }: Thre
                   { text: "I'm feeling anxious", emoji: "🌊" },
                   { text: "Start a breathing exercise", emoji: "🧘" },
                   { text: "Write in my journal", emoji: "📝" },
+                  { text: "Show my self-care checklist", emoji: "✅" },
+                  { text: "Guide me through a meditation", emoji: "🧘‍♀️" },
+                  { text: "I can't sleep, any tips?", emoji: "😴" },
+                  { text: "How am I doing with my check-ins?", emoji: "🔥" },
                 ].map((suggestion, index) => (
                   <button
                     key={suggestion.text}
                     onClick={() => handleSuggestionClick(suggestion.text)}
                     className={`group flex items-center gap-3 px-4 py-3.5 text-sm text-left rounded-xl border border-border
-                      hover:border-primary/50 hover:bg-primary/5 hover:shadow-md
-                      transition-all duration-200 press-effect stagger-${index + 1} animate-fade-in`}
+                      hover:border-primary/50 hover:bg-primary/5 hover:shadow-md cursor-pointer
+                      transition-all duration-200 press-effect stagger-${(index % 4) + 1} animate-fade-in`}
                   >
                     <span className="text-lg group-hover:scale-110 transition-transform">{suggestion.emoji}</span>
                     <span className="text-card-foreground group-hover:text-primary transition-colors">{suggestion.text}</span>

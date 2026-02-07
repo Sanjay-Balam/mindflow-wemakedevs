@@ -140,3 +140,17 @@ export const weeklySummarySchema = z.object({
 });
 
 export type WeeklySummaryProps = z.infer<typeof weeklySummarySchema>;
+
+// Self-Care Checklist Schema (Interactable)
+export const selfCareChecklistSchema = z.object({
+  title: z.string().default("Daily Self-Care"),
+  items: z.array(z.object({
+    id: z.string(),
+    label: z.string(),
+    category: z.enum(["physical", "mental", "social", "nutrition"]).default("physical"),
+    completed: z.boolean().default(false),
+  })).default([]),
+  date: z.string().default(() => new Date().toISOString()),
+});
+
+export type SelfCareChecklistProps = z.infer<typeof selfCareChecklistSchema>;

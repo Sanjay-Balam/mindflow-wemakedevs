@@ -436,6 +436,88 @@ RETURNS: Current weather, average mood, and correlation insights.`,
   outputSchema: getWeatherOutputSchema,
 };
 
+// ===== TOOL: Crisis Resource Detection =====
+const getCrisisResourcesInputSchema = z.object({
+  context: z.string().describe("The user message or context to assess for crisis signals"),
+});
+
+const getCrisisResourcesOutputSchema = z.object({
+  success: z.boolean(),
+  isCrisis: z.boolean(),
+  resources: z.array(z.object({
+    name: z.string(),
+    contact: z.string(),
+    description: z.string(),
+  })).optional(),
+  message: z.string().optional(),
+});
+
+const CRISIS_KEYWORDS = [
+  "suicide", "kill myself", "end it all", "self-harm", "hurt myself",
+  "don't want to live", "no reason to live", "better off without me",
+  "want to die", "end my life", "not worth living", "take my own life",
+];
+
+const CRISIS_RESOURCES = [
+  {
+    name: "National Suicide Prevention Lifeline",
+    contact: "988 (call or text)",
+    description: "Free, confidential 24/7 support for people in distress.",
+  },
+  {
+    name: "Crisis Text Line",
+    contact: "Text HOME to 741741",
+    description: "Free 24/7 text-based crisis support.",
+  },
+  {
+    name: "International Association for Suicide Prevention",
+    contact: "https://www.iasp.info/resources/Crisis_Centres/",
+    description: "Find crisis centers worldwide.",
+  },
+];
+
+const getCrisisResourcesTool: TamboTool<
+  z.infer<typeof getCrisisResourcesInputSchema>,
+  z.infer<typeof getCrisisResourcesOutputSchema>
+> = {
+  name: "getCrisisResources",
+  description: `Assess user messages for crisis signals and return safety resources if needed.
+
+WHEN TO USE:
+- User expresses thoughts of self-harm or suicide
+- User mentions wanting to die or not wanting to live
+- User expresses severe hopelessness or despair
+- Any message containing crisis-related language
+
+IMPORTANT: Always err on the side of caution. If in doubt, call this tool.
+
+RETURNS:
+- isCrisis: Whether crisis signals were detected
+- resources: Array of crisis hotlines and resources (if crisis detected)
+- message: Supportive message`,
+  tool: async ({ context }) => {
+    const lowerContext = context.toLowerCase();
+    const isCrisis = CRISIS_KEYWORDS.some((keyword) => lowerContext.includes(keyword));
+
+    if (isCrisis) {
+      return {
+        success: true,
+        isCrisis: true,
+        resources: CRISIS_RESOURCES,
+        message: "I hear you, and I want you to know that you matter. Please reach out to one of these resources — trained professionals are available 24/7 to help.",
+      };
+    }
+
+    return {
+      success: true,
+      isCrisis: false,
+      message: "No immediate crisis signals detected. Continue providing empathetic support.",
+    };
+  },
+  inputSchema: getCrisisResourcesInputSchema,
+  outputSchema: getCrisisResourcesOutputSchema,
+};
+
 // Export all tools
 export const tools: TamboTool[] = [
   getMoodHistoryTool,
@@ -443,4 +525,5 @@ export const tools: TamboTool[] = [
   playRelaxingSoundTool,
   exportMoodReportTool,
   getWeatherMoodCorrelationTool,
+  getCrisisResourcesTool,
 ];

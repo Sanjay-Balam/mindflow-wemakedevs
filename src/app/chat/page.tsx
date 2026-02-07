@@ -166,8 +166,52 @@ export default function ChatPage() {
           "Weekly mood summaries",
           "Mood reminders and ambient sounds",
           "Mood data export for therapists",
+          "Self-care daily checklist",
+          "Guided meditations",
+          "CBT thought challenging exercises",
+          "Sleep hygiene tips",
+          "Voice input for hands-free interaction",
         ],
       }),
+      habitContext: async () => {
+        try {
+          const [moodsRes, journalsRes] = await Promise.all([
+            fetch("/api/moods?days=30"),
+            fetch("/api/journals"),
+          ]);
+          const moodsData = await moodsRes.json();
+          const journalsData = await journalsRes.json();
+
+          const moods = moodsData.moods || [];
+          const journals = journalsData.journals || [];
+
+          // Calculate mood logging streak (consecutive days)
+          let moodStreak = 0;
+          const today = new Date();
+          for (let i = 0; i < 30; i++) {
+            const checkDate = new Date(today);
+            checkDate.setDate(checkDate.getDate() - i);
+            const dateStr = checkDate.toISOString().split("T")[0];
+            const hasEntry = moods.some((m: { timestamp?: string }) => m.timestamp?.startsWith(dateStr));
+            if (hasEntry) moodStreak++;
+            else break;
+          }
+
+          // Last check-in time
+          const lastMood = moods[0]?.timestamp;
+          const lastJournal = journals[0]?.timestamp;
+
+          return {
+            moodStreak,
+            totalMoodEntries: moods.length,
+            totalJournalEntries: journals.length,
+            lastMoodCheckIn: lastMood || null,
+            lastJournalEntry: lastJournal || null,
+          };
+        } catch {
+          return null;
+        }
+      },
     }),
     []
   );
