@@ -114,6 +114,12 @@ export default function HomePage() {
                 >
                   Open App
                 </Link>
+                <Link
+                  href="/journal"
+                  className="px-4 py-2 rounded-lg border border-border text-card-foreground font-medium hover:bg-muted transition-colors"
+                >
+                  Journal
+                </Link>
                 <div className="relative flex items-center" ref={menuRef}>
                   <button
                     onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}

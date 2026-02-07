@@ -9,14 +9,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user;
       const isOnChat = request.nextUrl.pathname.startsWith("/chat");
+      const isOnJournal = request.nextUrl.pathname.startsWith("/journal");
       const isOnApi = request.nextUrl.pathname.startsWith("/api");
       const isAuthApi = request.nextUrl.pathname.startsWith("/api/auth");
 
       // Always allow auth API routes
       if (isAuthApi) return true;
 
-      // Protect /chat and /api routes
-      if ((isOnChat || isOnApi) && !isLoggedIn) {
+      // Protect /chat, /journal, and /api routes
+      if ((isOnChat || isOnJournal || isOnApi) && !isLoggedIn) {
         return false; // Redirects to pages.signIn ("/")
       }
 

@@ -57,7 +57,7 @@ EXAMPLE PROMPTS:
 
   {
     name: "JournalEntry",
-    description: `An interactive journaling component for writing and saving personal reflections.
+    description: `An interactive journaling component for writing and saving personal reflections. Entries are saved to the database and viewable on the dedicated Journal page.
 
 WHEN TO RENDER:
 - User wants to "write in my journal" or "journal about..."
@@ -71,6 +71,7 @@ FEATURES:
 - Tag system for categorization
 - Word count tracking
 - Edit and save functionality
+- Entries persist to database and appear on the Journal page
 
 EXAMPLE PROMPTS:
 - "I want to journal about my day"
@@ -301,7 +302,7 @@ When a user wants to see their mood history:
 When a user needs to calm down, offer the BreathingExercise component immediately.
 
 ### For Reflection:
-When a user wants to journal or process thoughts, use the JournalEntry component.
+When a user wants to journal or process thoughts, use the JournalEntry component. Journal entries created in chat are saved to the database and viewable on the dedicated Journal page (/journal).
 
 ### For Positivity:
 When working on gratitude, use the GratitudeList component.

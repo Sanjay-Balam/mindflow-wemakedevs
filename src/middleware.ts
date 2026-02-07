@@ -1,5 +1,5 @@
 export { auth as middleware } from "@/auth";
 
 export const config = {
-  matcher: ["/chat/:path*", "/api/((?!auth).*)"],
+  matcher: ["/chat/:path*", "/journal/:path*", "/api/((?!auth).*)"],
 };

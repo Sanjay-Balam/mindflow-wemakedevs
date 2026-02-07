@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useTamboComponentState } from "@tambo-ai/react";
 import { cn, getMoodEmoji, formatDate } from "@/lib/utils";
 import type { JournalEntryProps } from "@/lib/schemas";
-import { BookOpen, Tag, Check, X, Plus, Pencil } from "lucide-react";
+import { BookOpen, Tag, Check, X, Plus, Pencil, Loader2 } from "lucide-react";
 
 const MOOD_OPTIONS = ["great", "good", "okay", "bad", "terrible"] as const;
 
@@ -40,6 +40,7 @@ export function JournalEntry(props: JournalEntryProps) {
 
   const [customTag, setCustomTag] = useState("");
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(!state.content);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,10 +83,25 @@ export function JournalEntry(props: JournalEntryProps) {
     }
   };
 
-  const handleSave = () => {
-    setState({ ...state, timestamp: new Date().toISOString() });
-    setIsSaved(true);
-    setIsEditing(false);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const updatedState = { ...state, timestamp: new Date().toISOString() };
+      setState(updatedState);
+
+      await fetch("/api/journals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...updatedState, source: "chat" }),
+      });
+
+      setIsSaved(true);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Failed to save journal:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const wordCount = state.content?.trim().split(/\s+/).filter(Boolean).length || 0;
@@ -273,10 +289,17 @@ export function JournalEntry(props: JournalEntryProps) {
           <div className="flex gap-3">
             <button
               onClick={handleSave}
-              disabled={!state.content?.trim()}
-              className="flex-1 py-3 px-4 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!state.content?.trim() || isSaving}
+              className="flex-1 py-3 px-4 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Save Entry
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Entry"
+              )}
             </button>
             {state.content && (
               <button

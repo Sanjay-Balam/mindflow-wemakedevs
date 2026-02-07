@@ -231,9 +231,12 @@ export default function ChatPage() {
             </Link>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground hidden sm:block">
-              Your mental wellness companion
-            </span>
+            <Link
+              href="/journal"
+              className="text-sm text-muted-foreground hover:text-card-foreground transition-colors hidden sm:block"
+            >
+              Journal
+            </Link>
             {session?.user && (
               <div className="flex items-center gap-2 ml-2">
                 {session.user.image && (
